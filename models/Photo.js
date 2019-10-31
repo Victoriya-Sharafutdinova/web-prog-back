@@ -18,7 +18,6 @@ module.exports = (sequelize, DataTypes) => {
         },
     }, { timestamps: false });
     model.associate = (models) =>{
-
     }
     return model;
 };
