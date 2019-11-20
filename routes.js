@@ -87,7 +87,8 @@ module.exports = function(app, db) {
         let photo = await db.Models.Photo.create({
             URL: object.URL,
             author: object.author,
-            categoryName: object.categoryName
+            categoryName: object.categoryName,
+            description: object.description
         });
         res.send(photo);
     });
@@ -120,12 +121,13 @@ module.exports = function(app, db) {
         let object = convertToObj(req.body);
         object = object.data;
         let id = parseInt(object.id);
-       
-        if (isNaN(id) || object.URL == null || object.author == null || object.categoryName == null) return res.send(false);
+        console.log(object);
+        if (isNaN(id) || object.URL == null || object.author == null || object.categoryName == null || object.description == null) return res.send(false);
         let photos = await db.Models.Photo.update({
             URL: object.URL,
             author: object.author,
-            categoryName: object.categoryName
+            categoryName: object.categoryName,
+            description: object.description
         }, {
             where: {
                 id: id,
@@ -150,6 +152,7 @@ module.exports = function(app, db) {
 };
 let convertToObj = function(obj) {
     for (const key in obj) {
+        console.log(key);
         return JSON.parse(key);
     }
 }

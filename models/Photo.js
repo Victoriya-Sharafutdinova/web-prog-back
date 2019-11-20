@@ -16,6 +16,9 @@ module.exports = (sequelize, DataTypes) => {
         author: {
             type: Sequelize.STRING,
         },
+        description: {
+            type: Sequelize.STRING,
+        },
     }, { timestamps: false });
     model.associate = (models) =>{
     }
