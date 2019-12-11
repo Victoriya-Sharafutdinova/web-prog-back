@@ -1,7 +1,10 @@
 //pg_ctl -D /postgresql/data start
 let jwt = require('jsonwebtoken');
 const secretKey = "myTestSecretKey";
-const easyvk = require('easyvk');
+const fileLoad = require('./files');
+const path = require('path');
+const fs = require('fs');
+
 
 module.exports = function(app, db) {
     app.use(function(req, res, next) {
@@ -22,6 +25,7 @@ module.exports = function(app, db) {
             next();
         }
     });
+    
     app.get('/testdb', async (req, res) => {
         res.send(`DB url ${process.env.DATABASE_URL}`);
     });
@@ -40,45 +44,39 @@ module.exports = function(app, db) {
             }
         });
         if (user != null) {
-            user.token = jwt.sign({ login: object.login, isAdmin: user.isAdmin }, secretKey);
-            await user.save();
+            let token = jwt.sign({ login: object.login, isAdmin: user.isAdmin }, secretKey);
             res.send({
                 login: user.login,
                 isAdmin: user.isAdmin,
-                token: user.token
+                token: token
             });
         }
         else {
-            if(object.isOAuth){
-                easyvk({
-                    username: object.login,
-                    password: object.password,
-                  }).then(async vk => {
-                    let newUser = await db.Models.User.create({
-                        login: object.login,
-                        password: object.password,
-                        isAdmin: false,
-                        token: jwt.sign({
-                            login: object.login,
-                            isAdmin: false
-                        }, secretKey)
-                    });
-                    res.send({
-                        login:newUser.login,
-                        isAdmin:newUser.isAdmin,
-                        token:newUser.token
-                    });
-                  }).catch(err => {
-                    res.send(false);
-                  });              
-            }
-            else{
-                res.send(false);
-            }
-        }
-     
-       
+            res.send(false);
+        } 
     });
+
+    app.post('/loginVk', async(req, res) => {
+        let object = convertToObj(req.body);
+        let user = await db.Models.User.findOne({
+            where: {
+                token: object.oAuthToken
+            }
+        });
+        if (user == null) {
+            user = await db.Models.User.create({
+                login: object.login,
+                isAdmin: false,
+                token: object.oAuthToken
+            });
+        }
+        let token = jwt.sign({ login: user.login, isAdmin: user.isAdmin }, secretKey);
+        res.send({
+            login: user.login,
+            isAdmin: user.isAdmin,
+            token: token
+        });
+    })
 
     app.post('/gallery/create', async (req, res) => {
         let object = convertToObj(req.body);
@@ -105,12 +103,15 @@ module.exports = function(app, db) {
                 login: object.login,
                 password: object.password,
                 isAdmin: false,
+            });
+            res.send({
+                login: newUser.login,
+                isAdmin: newUser.isAdmin,
                 token: jwt.sign({
                     login: object.login,
                     isAdmin: false
                 }, secretKey)
             });
-            res.send(true);
         }
         else {
             res.send(false);
@@ -149,10 +150,36 @@ module.exports = function(app, db) {
         });
         res.send(true);
     });
+
+    app.post('/upload', fileLoad.upload.single('file'), (req, res) => {
+        const { file } = req;
+
+        if(!file){
+            console.log('File null');
+            return res.send(false);
+        }
+        console.log("__________________________PATH 1");
+        console.log(path.resolve('/', file.originalname));
+        console.log("__________________________PATH 2");
+        console.log(file.originalname);
+        console.log("__________________________PATH 3");
+        console.log(fileLoad.PATH);
+        dropbox({
+            resource: 'files/upload',
+            parameters:{
+                path: '/' + file.originalname
+            },
+            readStream: fs.createReadStream(path.resolve(fileLoad.PATH, file.originalname))
+        }, (err, result, response) =>{
+            if (err) return console.log(err);
+    
+            console.log('uploaded dropbox');
+            res.send(true);
+        });
+    });
+    
+  
 };
 let convertToObj = function(obj) {
-    for (const key in obj) {
-        console.log(key);
-        return JSON.parse(key);
-    }
+    return JSON.parse(obj.data);
 }
