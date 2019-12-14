@@ -15,6 +15,7 @@ module.exports = function(app, db) {
             if (req.originalUrl === '/gallery' && object.pageName !== "admin") {
                 return next();
             }
+            console.log(req.body);
             jwt.verify(object.token, secretKey, async function(err, decoded) {
                 if (err) return res.send(false);
                 if (!decoded.isAdmin) return res.send(false);
@@ -31,8 +32,20 @@ module.exports = function(app, db) {
     });
 
     app.post('/gallery', async (req, res) => {       
-        let photos = await db.Models.Photo.findAll();
-        res.send(photos);
+        console.log("gallery");
+        let object = convertToObj(req.body);
+        object = object.data;
+        if (object == null || object.findText == null) object = {findText: ''};
+        let photos = await db.sequelize.query(`SELECT * FROM searchInPhotos('${object.findText}');`);
+        res.send(photos[0]);
+    });
+    
+    app.post('/author', async (req, res) => {
+        let object = convertToObj(req.body);
+        object = object.data;
+        if (object == null || object.findText == null) object = {findText: ''};
+        let photos = await db.sequelize.query(`SELECT * FROM searchInPhotos('${object.findText}');`);
+        res.send(photos[0]);
     });
 
     app.post('/login', async (req, res) => {

@@ -1,6 +1,6 @@
 {
-    "access_token": "",
-    "client_id": "",
-    "client_secret": "",     
+    "access_token": "CgBqSbvVN2AAAAAAAAAAIiaP5d5egbXT5A2Zr_3aWSR8ydU-utBmZTiwdGoEJaol",
+    "client_id": "ey2xw5u2ht2mhvf",
+    "client_secret": "5cx1atypd43bxuh",     
     "redirect_uri": "http://localhost:4200/dropbox/auth"
   } 
