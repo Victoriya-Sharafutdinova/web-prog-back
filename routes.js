@@ -5,16 +5,15 @@ const fileLoad = require('./files');
 const path = require('path');
 const fs = require('fs');
 
+const updatePhotos = require('./web_soket').updatePhotos;
 
 module.exports = function(app, db) {
     app.use(function(req, res, next) {
         res.header("Access-Control-Allow-Origin", "http://localhost:4200");
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Athorization");
-        if (['/gallery', '/gallery/create', '/gallery/update', '/gallery/delete'].includes(req.originalUrl)) {
+        if (['/gallery/create', '/gallery/update', '/gallery/delete'].includes(req.originalUrl)) {
             let object = convertToObj(req.body);
-            if (req.originalUrl === '/gallery' && object.pageName !== "admin") {
-                return next();
-            }
+            
             console.log(req.body);
             jwt.verify(object.token, secretKey, async function(err, decoded) {
                 if (err) return res.send(false);
@@ -26,9 +25,9 @@ module.exports = function(app, db) {
             next();
         }
     });
-    
-    app.get('/testdb', async (req, res) => {
-        res.send(`DB url ${process.env.DATABASE_URL}`);
+
+    app.get('/test', (req, res) => {
+        res.send(process.env.DATABASE_URL);
     });
 
     app.post('/gallery', async (req, res) => {       
@@ -102,6 +101,7 @@ module.exports = function(app, db) {
             description: object.description
         });
         res.send(photo);
+        updatePhotos();
     });
 
     app.post('/reg', async (req, res) => {
@@ -148,6 +148,7 @@ module.exports = function(app, db) {
             } 
         });
         res.send(object);
+        updatePhotos();
     });
 
     app.post('/gallery/delete', async (req, res) => {
@@ -162,6 +163,7 @@ module.exports = function(app, db) {
             } 
         });
         res.send(true);
+        updatePhotos();
     });
 
     app.post('/upload', fileLoad.upload.single('file'), (req, res) => {

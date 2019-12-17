@@ -18,6 +18,8 @@ app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 require('./routes')(app, db);
+require('./web_soket')(db);
+
 if (dropboxConfig.access_token) {
   global.dropbox = dropboxV2api.authenticate({
       token: dropboxConfig.access_token
@@ -28,7 +30,7 @@ if (dropboxConfig.access_token) {
       client_secret: dropboxConfig.client_secret,
       redirect_uri: dropboxConfig.redirect_uri
   });
-}
+} 
 
 app.get('/dropbox/auth', (req, res) => {
  dropbox.getToken(req.query.code, (err, response) => {
