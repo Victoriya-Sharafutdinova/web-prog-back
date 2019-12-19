@@ -9,7 +9,7 @@ const WebSocketClient  = require('websocket').client;
 
 module.exports = function(app, db) {
     app.use(function(req, res, next) {
-        res.header("Access-Control-Allow-Origin", "http://localhost:4200");
+        res.header("Access-Control-Allow-Origin", "http://2.93.101.236:4200");
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Athorization");
         if (['/gallery/create', '/gallery/update', '/gallery/delete'].includes(req.originalUrl)) {
             let object = convertToObj(req.body);
