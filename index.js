@@ -18,7 +18,6 @@ app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 require('./routes')(app, db);
-require('./web_soket')(db);
 
 if (dropboxConfig.access_token) {
   global.dropbox = dropboxV2api.authenticate({

@@ -5,7 +5,7 @@ const fileLoad = require('./files');
 const path = require('path');
 const fs = require('fs');
 
-const updatePhotos = require('./web_soket').updatePhotos;
+const WebSocketClient  = require('websocket').client;
 
 module.exports = function(app, db) {
     app.use(function(req, res, next) {
@@ -101,7 +101,7 @@ module.exports = function(app, db) {
             description: object.description
         });
         res.send(photo);
-        updatePhotos();
+        updatePhotos(db);
     });
 
     app.post('/reg', async (req, res) => {
@@ -136,7 +136,7 @@ module.exports = function(app, db) {
         object = object.data;
         let id = parseInt(object.id);
         console.log(object);
-        if (isNaN(id) || object.URL == null || object.author == null || object.categoryName == null || object.description == null) return res.send(false);
+        if (isNaN(id) || object.URL == null || object.author == null || object.categoryName == null) return res.send(false);
         let photos = await db.Models.Photo.update({
             URL: object.URL,
             author: object.author,
@@ -148,7 +148,7 @@ module.exports = function(app, db) {
             } 
         });
         res.send(object);
-        updatePhotos();
+        updatePhotos(db);
     });
 
     app.post('/gallery/delete', async (req, res) => {
@@ -163,7 +163,7 @@ module.exports = function(app, db) {
             } 
         });
         res.send(true);
-        updatePhotos();
+        updatePhotos(db);
     });
 
     app.post('/upload', fileLoad.upload.single('file'), (req, res) => {
@@ -192,9 +192,73 @@ module.exports = function(app, db) {
             res.send(true);
         });
     });
-    
-  
+
+
+    app.post('/vkcallback', (req, res) => {
+        console.log("VK message" + req.body);
+        if (req.body.type == "confirmation") {
+            if (req.body.group_id === 190006284) {
+                res.send("419e6d63");
+                return;
+            }
+        }
+        const client = new WebSocketClient();
+
+        client.on('connectFailed', (error) => {
+            console.log('Connect Error: ' + error.toString());
+        });
+
+        client.on('connect', async (connection) => {
+            console.log('WebSocket Client Connected');
+            connection.on('error', (error) => {
+                console.log("Connection Error: " + error.toString());
+            });
+            connection.on('close', () => {
+                console.log('echo-protocol Connection Closed');
+            });
+            if (connection.connected) {
+                connection.sendUTF(JSON.stringify({
+                    data: req.body,
+                    type: "updateText"
+                }));
+            }
+            connection.close();
+        });
+        client.connect('wss://vast-savannah-60052.herokuapp.com/', 'echo-protocol');
+        res.send('ok');
+    });
 };
+ 
 let convertToObj = function(obj) {
     return JSON.parse(obj.data);
 }
+
+let updatePhotos = (db) => {
+    const client = new WebSocketClient();
+
+    client.on('connectFailed', (error) => {
+        console.log('Connect Error: ' + error.toString());
+    });
+
+    client.on('connect', async (connection) => {
+        console.log('WebSocket Client Connected');
+        connection.on('error', (error) => {
+            console.log("Connection Error: " + error.toString());
+        });
+        connection.on('close', () => {
+            console.log('echo-protocol Connection Closed');
+        });
+
+        let photos = await db.Models.Sushi.findAll();
+        if (connection.connected) {
+            connection.sendUTF(JSON.stringify({
+                data: photos,
+                type: "updatePhotos"
+            }));
+        }
+
+        connection.close();
+    });
+
+    client.connect('wss://vast-savannah-60052.herokuapp.com/', 'echo-protocol');
+};
