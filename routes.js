@@ -9,12 +9,12 @@ const WebSocketClient  = require('websocket').client;
 
 module.exports = function(app, db) {
     app.use(function(req, res, next) {
-        if(process.env.DATABASE_URL){
+       // if(process.env.DATABASE_URL){
             res.header("Access-Control-Allow-Origin", "https://photogalleryvika.herokuapp.com");
-        }
-        else{           
-             res.header("Access-Control-Allow-Origin", "http://localhost:4200");
-        }
+        // }
+        // else{           
+        //      res.header("Access-Control-Allow-Origin", "http://localhost:4200");
+        // }
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Athorization");
         if (['/gallery/create', '/gallery/update', '/gallery/delete'].includes(req.originalUrl)) {
             let object = convertToObj(req.body);
