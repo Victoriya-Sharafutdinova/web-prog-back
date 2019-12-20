@@ -9,7 +9,12 @@ const WebSocketClient  = require('websocket').client;
 
 module.exports = function(app, db) {
     app.use(function(req, res, next) {
-        res.header("Access-Control-Allow-Origin", "http://localhost:4200");
+        if(process.env.DATABASE_URL){
+            res.header("Access-Control-Allow-Origin", "https://photogalleryvika.herokuapp.com");
+        }
+        else{           
+             res.header("Access-Control-Allow-Origin", "http://localhost:4200");
+        }
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Athorization");
         if (['/gallery/create', '/gallery/update', '/gallery/delete'].includes(req.originalUrl)) {
             let object = convertToObj(req.body);
@@ -224,20 +229,22 @@ module.exports = function(app, db) {
             }
             connection.close();
         });
-        client.connect('wss://vast-savannah-60052.herokuapp.com/', 'echo-protocol');
+        client.connect('wss://photogalleryws.herokuapp.com', 'echo-protocol');
         res.send('ok');
     });
 };
  
 let convertToObj = function(obj) {
+    console.log(obj.data);
     return JSON.parse(obj.data);
+    
 }
 
 let updatePhotos = (db) => {
     const client = new WebSocketClient();
 
     client.on('connectFailed', (error) => {
-        console.log('Connect Error: ' + error.toString());
+        console.log('Connect Error (connectFailed): ' + error.toString());
     });
 
     client.on('connect', async (connection) => {
@@ -249,7 +256,7 @@ let updatePhotos = (db) => {
             console.log('echo-protocol Connection Closed');
         });
 
-        let photos = await db.Models.Sushi.findAll();
+        let photos = await db.Models.Photo.findAll();
         if (connection.connected) {
             connection.sendUTF(JSON.stringify({
                 data: photos,
@@ -260,5 +267,5 @@ let updatePhotos = (db) => {
         connection.close();
     });
 
-    client.connect('wss://vast-savannah-60052.herokuapp.com/', 'echo-protocol');
+    client.connect('wss://photogalleryws.herokuapp.com', 'echo-protocol');
 };
